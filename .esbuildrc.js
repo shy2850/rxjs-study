@@ -1,3 +1,4 @@
+const build = process.env['NODE_ENV'] === 'build' || process.argv[process.argv.length - 1] === 'build'
 // @ts-check
 
 /**
@@ -10,7 +11,7 @@ let config = {
     outfile: 'static/bundle.js',
     target: 'chrome70',
     define: {
-        "process.env.NODE_ENV": '"dev"',
+        'process.env.NODE_ENV': JSON.stringify(build ? 'production' : 'development')
     },
     jsxFactory: 'React.createElement',
     bundle: true,
