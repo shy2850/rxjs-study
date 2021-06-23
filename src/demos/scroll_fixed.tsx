@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { fromEvent, Subscription } from 'rxjs'
-import { map, switchMapTo, takeUntil } from 'rxjs/operators'
+import { map, switchMapTo, takeUntil, withLatestFrom } from 'rxjs/operators'
 
 const W = 400
 const H = 250
@@ -9,6 +9,7 @@ export default () => {
     let s2: Subscription;
 
     const init_image: React.LegacyRef<HTMLImageElement> = (img) => {
+        if (!img) return
         const scroll = fromEvent(document, 'scroll')
         s1 = scroll.pipe(map(e => img.parentElement.getBoundingClientRect().bottom < 0))
         .subscribe(fixed => {
@@ -25,15 +26,21 @@ export default () => {
         const mouseUp = fromEvent(document, 'mouseup')
         const mouseMove = fromEvent(document, 'mousemove')
 
-        s2 = mouseDown.pipe(switchMapTo(mouseMove.pipe(takeUntil(mouseUp))))
-        .pipe(map((e: MouseEvent) => {
-            return {
-                x: e.clientX,
-                y: e.clientY,
-            }
-        })).subscribe(pos => {
-            img.style.left = `${pos.x - W / 2}px`
-            img.style.top = `${pos.y - H / 2}px`
+        s2 = mouseDown.pipe(
+            switchMapTo(mouseMove.pipe(takeUntil(mouseUp))),
+            withLatestFrom(mouseDown),
+            map(([move, down]: [MouseEvent, MouseEvent]) => {
+                return {
+                    x: move.clientX - down.offsetX,
+                    y: move.clientY - down.offsetY,
+                }
+            }),
+        )
+        .subscribe(pos => {
+            let left = Math.min(Math.max(6, pos.x), window.innerWidth - W - 20)
+            let top = Math.min(Math.max(6, pos.y), window.innerHeight - H - 6)
+            img.style.left = `${left}px`
+            img.style.top = `${top}px`
         })
     }
 
@@ -50,8 +57,8 @@ export default () => {
             <img ref={init_image} style={{
                 width: W,
                 height: H,
-                left: document.documentElement.clientWidth - (W + 40),
-                top: document.documentElement.clientHeight - (H + 20),
+                left: window.innerWidth - (W + 40),
+                top: window.innerHeight - (H + 20),
             }} src="https://dss0.bdstatic.com/l4oZeXSm1A5BphGlnYG/skin/19.jpg?2" draggable={false}/>
         </div>
         <p style={{height: 200}}>内容内容</p>

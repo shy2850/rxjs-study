@@ -10,7 +10,7 @@ const Page404 = () => <div style={{ textAlign: 'center', padding: 32 }}>
 </div>
 
 const App = () => {
-    const [menu, setMenu] = React.useState(menus[0])
+    const [menu, setMenu] = React.useState(menus.find(m => m.hash === location.hash))
 
     addEventListener('hashchange', () => {
         const menu = menus.find(m => m.hash === location.hash)
